@@ -1,20 +1,14 @@
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM eclipse-temurin:17
+
+ENV PORT 8080
+
 WORKDIR /app
 
-COPY pom.xml .
-RUN mvn dependency:go-offline
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw
+RUN ./mvnw dependency:resolve
 
 COPY src ./src
-RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:17-jre-jammy
-WORKDIR /app
-
-RUN addgroup --system spring && adduser --system spring --ingroup spring
-USER spring:spring
-
-COPY --from=build /app/target/*.jar app.jar
-
-EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["./mvnw", "spring-boot:run"]
